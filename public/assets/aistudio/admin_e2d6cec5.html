@@ -1,0 +1,669 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>TAX RASHES Admin</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg:#050914;
+      --panel:#0b1426;
+      --panel2:#101d35;
+      --blue:#1769ff;
+      --cyan:#24a8ff;
+      --white:#f7faff;
+      --muted:#91a1ba;
+      --success:#20d58a;
+      --danger:#ff5571;
+      --border:#1c3153;
+    }
+
+    * { box-sizing:border-box; }
+    body {
+      margin:0;
+      color:var(--white);
+      background:linear-gradient(145deg,#03060d,#07142b);
+      font-family:Poppins,Arial,sans-serif;
+    }
+
+    button,input,select,textarea { font:inherit; }
+    button { cursor:pointer; }
+    .hidden { display:none!important; }
+
+    header {
+      position:sticky;
+      top:0;
+      z-index:5;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:17px;
+      background:rgba(5,9,20,.95);
+      border-bottom:1px solid var(--border);
+    }
+
+    .brand {
+      font:700 25px Rajdhani,sans-serif;
+      letter-spacing:2px;
+    }
+
+    .brand span { color:var(--cyan); }
+    main { max-width:1200px; margin:auto; padding:20px 16px 50px; }
+
+    h1,h2,h3 { font-family:Rajdhani,sans-serif; margin:0 0 12px; }
+    h1 { font-size:32px; }
+    h2 { font-size:25px; }
+    .muted { color:var(--muted); }
+
+    .grid {
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+      gap:14px;
+    }
+
+    .card {
+      background:linear-gradient(145deg,var(--panel),#0c1b34);
+      border:1px solid var(--border);
+      border-radius:18px;
+      padding:16px;
+    }
+
+    .stat {
+      font:700 32px Rajdhani,sans-serif;
+      color:var(--cyan);
+    }
+
+    .form {
+      display:grid;
+      gap:10px;
+    }
+
+    input,select,textarea {
+      width:100%;
+      color:var(--white);
+      background:#071225;
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:11px;
+      outline:none;
+    }
+
+    textarea { min-height:80px; }
+    .btn {
+      color:var(--white);
+      background:var(--panel2);
+      border:1px solid var(--border);
+      padding:10px 14px;
+      border-radius:10px;
+    }
+
+    .primary {
+      background:linear-gradient(135deg,var(--blue),var(--cyan));
+      border:0;
+    }
+
+    .danger { background:var(--danger); border:0; }
+    .success { background:var(--success); color:#00150e; border:0; }
+
+    .tabs {
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin:18px 0;
+    }
+
+    .tabs button.active { background:var(--blue); }
+    .section { display:none; }
+    .section.active { display:block; }
+
+    .item {
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      justify-content:space-between;
+      border-bottom:1px solid var(--border);
+      padding:12px 0;
+    }
+
+    .item:last-child { border-bottom:0; }
+    .actions { display:flex; gap:6px; flex-wrap:wrap; }
+    .status {
+      display:inline-block;
+      padding:4px 8px;
+      border-radius:20px;
+      background:#162c4c;
+      color:#c8dcff;
+      font-size:12px;
+    }
+
+    .auth-box { max-width:420px; margin:12vh auto; padding:20px; }
+    .toast {
+      position:fixed;
+      left:50%;
+      bottom:25px;
+      transform:translateX(-50%);
+      z-index:20;
+      background:#152a4a;
+      border:1px solid var(--border);
+      padding:12px 18px;
+      border-radius:10px;
+    }
+  </style>
+</head>
+
+<body>
+<div id="loginView" class="auth-box card">
+  <div class="brand">TAX <span>RASHES</span></div>
+  <h1>Admin login</h1>
+  <p class="muted">Only approved Firebase admin accounts may continue.</p>
+
+  <form id="loginForm" class="form">
+    <input id="email" type="email" placeholder="Admin email" required>
+    <input id="password" type="password" placeholder="Password" required>
+    <button class="btn primary">Login</button>
+  </form>
+</div>
+
+<div id="adminView" class="hidden">
+  <header>
+    <div class="brand">TAX <span>RASHES ADMIN</span></div>
+    <button class="btn" onclick="logout()">Logout</button>
+  </header>
+
+  <main>
+    <div class="grid">
+      <div class="card"><p class="muted">Users</p><div class="stat" id="statUsers">0</div></div>
+      <div class="card"><p class="muted">Tournaments</p><div class="stat" id="statTournaments">0</div></div>
+      <div class="card"><p class="muted">Deposits pending</p><div class="stat" id="statDeposits">0</div></div>
+      <div class="card"><p class="muted">Top-up orders</p><div class="stat" id="statOrders">0</div></div>
+    </div>
+
+    <div class="tabs">
+      <button class="btn active" onclick="tab('dashboard',this)">Dashboard</button>
+      <button class="btn" onclick="tab('tournaments',this)">Tournaments</button>
+      <button class="btn" onclick="tab('products',this)">Top-up products</button>
+      <button class="btn" onclick="tab('payments',this)">Payments</button>
+      <button class="btn" onclick="tab('deposits',this)">Deposits</button>
+      <button class="btn" onclick="tab('withdrawals',this)">Withdrawals</button>
+      <button class="btn" onclick="tab('users',this)">Users</button>
+      <button class="btn" onclick="tab('support',this)">Support</button>
+    </div>
+
+    <section id="dashboard" class="section active">
+      <div class="card">
+        <h2>Admin dashboard</h2>
+        <p class="muted">Use the sections above to manage the platform.</p>
+        <p>Important actions should be reviewed before approval. Financial balances and results should be updated only after verification.</p>
+      </div>
+    </section>
+
+    <section id="tournaments" class="section">
+      <div class="card">
+        <h2>Create tournament</h2>
+        <form id="tournamentForm" class="form">
+          <input id="tTitle" placeholder="Tournament title" required>
+          <select id="tType">
+            <option>Solo</option>
+            <option>Duo</option>
+            <option>Squad</option>
+          </select>
+          <input id="tEntry" type="number" min="0" placeholder="Entry fee" required>
+          <input id="tPrize" type="number" min="0" placeholder="Prize pool" required>
+          <input id="tSchedule" placeholder="Schedule, e.g. 25 Sep 2026, 9:00 PM" required>
+          <input id="tRoomTime" type="datetime-local" placeholder="Room release time">
+          <textarea id="tDescription" placeholder="Tournament details"></textarea>
+          <button class="btn primary">Create tournament</button>
+        </form>
+      </div>
+      <br>
+      <div class="card">
+        <h2>Tournament list</h2>
+        <div id="tournamentList"></div>
+      </div>
+    </section>
+
+    <section id="products" class="section">
+      <div class="card">
+        <h2>Create top-up product</h2>
+        <form id="productForm" class="form">
+          <input id="pTitle" placeholder="Product title" required>
+          <input id="pPrice" type="number" min="0" placeholder="Price" required>
+          <textarea id="pDescription" placeholder="Description"></textarea>
+          <button class="btn primary">Create product</button>
+        </form>
+      </div>
+      <br>
+      <div class="card">
+        <h2>Products</h2>
+        <div id="productList"></div>
+      </div>
+    </section>
+
+    <section id="payments" class="section">
+      <div class="card">
+        <h2>Payment method and number</h2>
+        <form id="paymentForm" class="form">
+          <select id="payMethod">
+            <option>bKash</option>
+            <option>Nagad</option>
+            <option>Rocket</option>
+          </select>
+          <input id="payNumber" placeholder="Payment number" required>
+          <input id="payLabel" placeholder="Label, e.g. Personal / Merchant">
+          <textarea id="payInstructions" placeholder="Payment instructions"></textarea>
+          <button class="btn primary">Save payment method</button>
+        </form>
+      </div>
+      <br>
+      <div class="card">
+        <h2>Saved payment methods</h2>
+        <div id="paymentList"></div>
+      </div>
+    </section>
+
+    <section id="deposits" class="section">
+      <div class="card">
+        <h2>Deposit requests</h2>
+        <div id="depositList"></div>
+      </div>
+    </section>
+
+    <section id="withdrawals" class="section">
+      <div class="card">
+        <h2>Withdrawal requests</h2>
+        <div id="withdrawalList"></div>
+      </div>
+    </section>
+
+    <section id="users" class="section">
+      <div class="card">
+        <h2>User management</h2>
+        <div id="userList"></div>
+      </div>
+    </section>
+
+    <section id="support" class="section">
+      <div class="card">
+        <h2>Support tickets</h2>
+        <div id="supportList"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+  import {
+    getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut
+  } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+  import {
+    getDatabase, ref, get, set, push, update, onValue
+  } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT.firebaseapp.com",
+    databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+    projectId: "YOUR_PROJECT",
+    storageBucket: "YOUR_PROJECT.firebasestorage.app",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getDatabase(app);
+  let admin = null;
+  let data = {
+    users:{}, tournaments:{}, products:{}, payments:{},
+    deposits:{}, withdrawals:{}, support:{}
+  };
+
+  const $ = id => document.getElementById(id);
+  const money = n => `৳${Number(n || 0).toFixed(2)}`;
+
+  function toast(message) {
+    $("toast").textContent = message;
+    $("toast").classList.remove("hidden");
+    setTimeout(() => $("toast").classList.add("hidden"), 2800);
+  }
+
+  window.tab = (id, button) => {
+    document.querySelectorAll(".section").forEach(x => x.classList.remove("active"));
+    $(id).classList.add("active");
+    document.querySelectorAll(".tabs button").forEach(x => x.classList.remove("active"));
+    button.classList.add("active");
+  };
+
+  window.logout = () => signOut(auth);
+
+  $("loginForm").onsubmit = async e => {
+    e.preventDefault();
+    try {
+      await signInWithEmailAndPassword(auth, $("email").value, $("password").value);
+    } catch (error) {
+      toast(error.message.replace("Firebase:", "").trim());
+    }
+  };
+
+  onAuthStateChanged(auth, async user => {
+    if (!user) {
+      $("loginView").classList.remove("hidden");
+      $("adminView").classList.add("hidden");
+      return;
+    }
+
+    const snap = await get(ref(db, `users/${user.uid}`));
+    const profile = snap.val();
+
+    if (!profile || profile.role !== "admin" || profile.status === "blocked") {
+      toast("This account is not authorized as an admin.");
+      await signOut(auth);
+      return;
+    }
+
+    admin = user;
+    $("loginView").classList.add("hidden");
+    $("adminView").classList.remove("hidden");
+    listenAll();
+  });
+
+  function listenAll() {
+    const paths = ["users","tournaments","products","payments","deposits","withdrawals","supportTickets"];
+
+    paths.forEach(path => {
+      onValue(ref(db, path), snap => {
+        const key = path === "supportTickets" ? "support" : path;
+        data[key] = snap.val() || {};
+        renderAll();
+      });
+    });
+  }
+
+  function renderAll() {
+    $("statUsers").textContent = Object.keys(data.users).length;
+    $("statTournaments").textContent = Object.keys(data.tournaments).length;
+    $("statDeposits").textContent = countPending(data.deposits);
+    $("statOrders").textContent = countOrders();
+
+    renderTournaments();
+    renderProducts();
+    renderPayments();
+    renderDeposits();
+    renderWithdrawals();
+    renderUsers();
+    renderSupport();
+  }
+
+  function countPending(collection) {
+    let total = 0;
+    Object.values(collection || {}).forEach(userItems => {
+      Object.values(userItems || {}).forEach(x => {
+        if (x.status === "pending") total++;
+      });
+    });
+    return total;
+  }
+
+  function countOrders() {
+    let total = 0;
+    Object.values(data.users || {}).forEach(u => total += Number(u.topupOrders || 0));
+    return total || "—";
+  }
+
+  $("tournamentForm").onsubmit = async e => {
+    e.preventDefault();
+
+    const item = {
+      title: $("tTitle").value.trim(),
+      type: $("tType").value,
+      entryFee: Number($("tEntry").value),
+      prizePool: Number($("tPrize").value),
+      schedule: $("tSchedule").value.trim(),
+      roomReleaseAt: $("tRoomTime").value || "",
+      description: $("tDescription").value.trim(),
+      status: "upcoming",
+      enabled: true,
+      createdAt: Date.now(),
+      createdBy: admin.uid
+    };
+
+    await set(push(ref(db, "tournaments")), item);
+    e.target.reset();
+    toast("Tournament created.");
+  };
+
+  function renderTournaments() {
+    $("tournamentList").innerHTML = Object.entries(data.tournaments).map(([id,t]) => `
+      <div class="item">
+        <div>
+          <h3>${escapeHtml(t.title)}</h3>
+          <span class="status">${t.status || "upcoming"}</span>
+          <p class="muted">${t.type} · Entry ${money(t.entryFee)} · Prize ${money(t.prizePool)}</p>
+        </div>
+        <div class="actions">
+          <button class="btn success" onclick="setTournamentStatus('${id}','live')">Live</button>
+          <button class="btn" onclick="setTournamentStatus('${id}','completed')">Complete</button>
+          <button class="btn danger" onclick="disableItem('tournaments','${id}')">Disable</button>
+        </div>
+      </div>
+    `).join("") || "<p class='muted'>No tournaments.</p>";
+  }
+
+  window.setTournamentStatus = async (id,status) => {
+    await update(ref(db, `tournaments/${id}`), { status });
+    await logAction("tournament_status", id, status);
+    toast("Tournament status updated.");
+  };
+
+  $("productForm").onsubmit = async e => {
+    e.preventDefault();
+
+    await set(push(ref(db, "products")), {
+      title: $("pTitle").value.trim(),
+      price: Number($("pPrice").value),
+      description: $("pDescription").value.trim(),
+      enabled: true,
+      createdAt: Date.now(),
+      createdBy: admin.uid
+    });
+
+    e.target.reset();
+    toast("Product created.");
+  };
+
+  function renderProducts() {
+    $("productList").innerHTML = Object.entries(data.products).map(([id,p]) => `
+      <div class="item">
+        <div>
+          <h3>${escapeHtml(p.title)}</h3>
+          <p class="muted">${money(p.price)} · ${p.enabled === false ? "Disabled" : "Enabled"}</p>
+        </div>
+        <button class="btn" onclick="toggleItem('products','${id}',${p.enabled !== false})">
+          ${p.enabled === false ? "Enable" : "Disable"}
+        </button>
+      </div>
+    `).join("") || "<p class='muted'>No products.</p>";
+  }
+
+  $("paymentForm").onsubmit = async e => {
+    e.preventDefault();
+
+    const method = $("payMethod").value;
+    await set(ref(db, `payments/${method.toLowerCase()}`), {
+      method,
+      number: $("payNumber").value.trim(),
+      label: $("payLabel").value.trim(),
+      instructions: $("payInstructions").value.trim(),
+      enabled: true,
+      updatedAt: Date.now(),
+      updatedBy: admin.uid
+    });
+
+    e.target.reset();
+    toast("Payment method saved.");
+  };
+
+  function renderPayments() {
+    $("paymentList").innerHTML = Object.entries(data.payments).map(([id,p]) => `
+      <div class="item">
+        <div>
+          <h3>${escapeHtml(p.method)}</h3>
+          <p>${escapeHtml(p.number)}</p>
+          <p class="muted">${escapeHtml(p.label || "")}</p>
+        </div>
+        <button class="btn" onclick="toggleItem('payments','${id}',${p.enabled !== false})">
+          ${p.enabled === false ? "Enable" : "Disable"}
+        </button>
+      </div>
+    `).join("") || "<p class='muted'>No payment methods.</p>";
+  }
+
+  function renderDeposits() {
+    $("depositList").innerHTML = nestedItems(data.deposits, (x,uid,id) => `
+      <div class="item">
+        <div>
+          <h3>${money(x.amount)} · ${escapeHtml(x.method || "")}</h3>
+          <p>UID: ${uid}</p>
+          <p class="muted">Transaction: ${escapeHtml(x.transactionId || "")}</p>
+          <span class="status">${x.status}</span>
+        </div>
+        <div class="actions">
+          <button class="btn success" onclick="approveDeposit('${uid}','${id}',${Number(x.amount || 0)})">Approve</button>
+          <button class="btn danger" onclick="setNestedStatus('deposits','${uid}','${id}','rejected')">Reject</button>
+        </div>
+      </div>
+    `);
+  }
+
+  window.approveDeposit = async (uid,id,amount) => {
+    const userSnap = await get(ref(db, `users/${uid}`));
+    const user = userSnap.val() || {};
+    await update(ref(db, `deposits/${uid}/${id}`), {
+      status: "approved",
+      approvedAt: Date.now(),
+      approvedBy: admin.uid
+    });
+    await update(ref(db, `users/${uid}`), {
+      walletBalance: Number(user.walletBalance || 0) + amount
+    });
+    await set(push(ref(db, `walletTransactions/${uid}`)), {
+      type: "deposit",
+      amount,
+      status: "completed",
+      note: "Deposit approved",
+      createdAt: Date.now()
+    });
+    await logAction("deposit_approved", `${uid}/${id}`, amount);
+    toast("Deposit approved.");
+  };
+
+  function renderWithdrawals() {
+    $("withdrawalList").innerHTML = nestedItems(data.withdrawals, (x,uid,id) => `
+      <div class="item">
+        <div>
+          <h3>${money(x.amount)}</h3>
+          <p>UID: ${uid}</p>
+          <p class="muted">Destination: ${escapeHtml(x.destination || "")}</p>
+          <span class="status">${x.status}</span>
+        </div>
+        <div class="actions">
+          <button class="btn success" onclick="setNestedStatus('withdrawals','${uid}','${id}','approved')">Approve</button>
+          <button class="btn danger" onclick="setNestedStatus('withdrawals','${uid}','${id}','rejected')">Reject</button>
+        </div>
+      </div>
+    `);
+  }
+
+  function renderUsers() {
+    $("userList").innerHTML = Object.entries(data.users).map(([id,u]) => `
+      <div class="item">
+        <div>
+          <h3>${escapeHtml(u.name || u.email || id)}</h3>
+          <p class="muted">${escapeHtml(u.email || "")} · ${u.role || "user"}</p>
+          <p>Wallet: ${money(u.walletBalance)} · Prize: ${money(u.prizeBalance)}</p>
+          <span class="status">${u.status || "active"}</span>
+        </div>
+        <button class="btn ${u.status === "blocked" ? "success" : "danger"}"
+          onclick="blockUser('${id}','${u.status === "blocked" ? "active" : "blocked"}')">
+          ${u.status === "blocked" ? "Unblock" : "Block"}
+        </button>
+      </div>
+    `).join("") || "<p class='muted'>No users.</p>";
+  }
+
+  window.blockUser = async (uid,status) => {
+    await update(ref(db, `users/${uid}`), { status });
+    await logAction("user_status", uid, status);
+    toast("User status updated.");
+  };
+
+  function renderSupport() {
+    const rows = [];
+    Object.entries(data.support).forEach(([uid,tickets]) => {
+      Object.entries(tickets || {}).forEach(([id,x]) => rows.push(`
+        <div class="item">
+          <div>
+            <h3>${escapeHtml(x.subject || "Support ticket")}</h3>
+            <p>${escapeHtml(x.message || "")}</p>
+            <span class="status">${x.status || "open"}</span>
+          </div>
+          <button class="btn success" onclick="setNestedStatus('supportTickets','${uid}','${id}','closed')">Close</button>
+        </div>
+      `));
+    });
+    $("supportList").innerHTML = rows.join("") || "<p class='muted'>No support tickets.</p>";
+  }
+
+  window.setNestedStatus = async (collection,uid,id,status) => {
+    await update(ref(db, `${collection}/${uid}/${id}`), {
+      status,
+      reviewedAt: Date.now(),
+      reviewedBy: admin.uid
+    });
+    await logAction(`${collection}_status`, `${uid}/${id}`, status);
+    toast("Status updated.");
+  };
+
+  window.toggleItem = async (collection,id,current) => {
+    await update(ref(db, `${collection}/${id}`), { enabled: !current });
+    toast("Item updated.");
+  };
+
+  window.disableItem = async (collection,id) => {
+    await update(ref(db, `${collection}/${id}`), { enabled: false });
+    toast("Item disabled.");
+  };
+
+  async function logAction(action,target,value) {
+    await set(push(ref(db, "adminLogs")), {
+      adminUid: admin.uid,
+      action,
+      target,
+      value,
+      createdAt: Date.now()
+    });
+  }
+
+  function nestedItems(collection, template) {
+    const rows = [];
+    Object.entries(collection || {}).forEach(([uid,items]) => {
+      Object.entries(items || {}).forEach(([id,x]) => rows.push(template(x,uid,id)));
+    });
+    return rows.join("") || "<p class='muted'>No records.</p>";
+  }
+
+  function escapeHtml(value) {
+    return String(value || "").replace(/[&<>"']/g, x => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+    }[x]));
+  }
+</script>
+</body>
+</html>
